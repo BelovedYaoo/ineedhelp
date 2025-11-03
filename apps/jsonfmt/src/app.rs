@@ -1,5 +1,8 @@
 use eframe::egui;
-use egui_json_tree::{DefaultExpand, JsonTree};
+use egui_json_tree::{
+    DefaultExpand, JsonTree, JsonTreeMaxWidth, JsonTreeStyle, 
+    JsonTreeWrapping, JsonTreeWrappingConfig,
+};
 use serde::Serialize;
 
 use crate::context_menu::show_context_menu;
@@ -284,8 +287,21 @@ impl eframe::App for JsonFmtApp {
                                 DefaultExpand::SearchResultsOrAll(search_input)
                             };
 
+                            // 配置文本换行：最多显示2行，使用可用宽度，不在任意位置断行
+                            let wrapping = JsonTreeWrapping {
+                                max_rows: 2,
+                                max_width: JsonTreeMaxWidth::UiAvailableWidth,
+                                break_anywhere: false,
+                            };
+                            let wrapping_config = JsonTreeWrappingConfig {
+                                value_when_root: wrapping,
+                                value_with_expanded_parent: wrapping,
+                                value_in_collapsed_root: wrapping,
+                            };
+
                             JsonTree::new("json_tree", v)
                                 .default_expand(default_expand)
+                                .style(JsonTreeStyle::new().wrapping_config(wrapping_config))
                                 .on_render(|ui, context| {
                                     let pointer = context.pointer().to_json_pointer_string();
                                     show_context_menu(ui, context, pointer, pending_edits, edit_dialog);

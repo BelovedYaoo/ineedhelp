@@ -6,13 +6,19 @@ resolver = "2"
 
 [workspace.dependencies]
 # eframe bundles egui and native backends
-eframe = "0.33.0"
+eframe = { version = "0.33.0", default-features = false, features = ["default_fonts", "glow", "persistence"] }
 serde_json = { version = "1.0.145", features = ["preserve_order"] }
-serde = "1.0.228"
+serde = { version = "1.0.228", default-features = false, features = ["derive"] }
 arboard = "3.6.1"
-windows = { version = "0.62.2", features = [
-    "ApplicationModel_DataTransfer",
-    "Foundation",
-    "Foundation_Collections",
-] }
 egui_json_tree = "0.14.2"
+
+[profile.release]
+opt-level = 3       # 最高性能优化
+lto = "fat"         # 完整 LTO，最大化性能优化
+codegen-units = 1   # 单个代码生成单元，最佳优化
+strip = true        # 移除符号信息
+panic = "abort"     # 减小 panic 处理代码
+incremental = false # 禁用增量编译以获得最佳优化
+
+[profile.dev]
+incremental = true  # 开发模式保持增量编译

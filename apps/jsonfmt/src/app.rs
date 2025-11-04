@@ -211,16 +211,67 @@ impl eframe::App for JsonFmtApp {
                 let left = &mut columns[0];
                 left.label("原始 JSON：");
                 let available_height = left.available_height();
-                let edit_resp = egui::ScrollArea::both()
+                
+                let edit_resp = egui::ScrollArea::vertical()
                     .id_salt("input_scroll")
-                    .auto_shrink([false, false])
+                    .auto_shrink(false)
                     .show(left, |ui| {
-                        egui::TextEdit::multiline(&mut self.input)
-                            .desired_width(f32::INFINITY)
-                            .min_size(egui::vec2(ui.available_width(), available_height))
-                            .code_editor()
-                            .hint_text("在此粘贴或输入原始 JSON")
-                            .show(ui)
+                        // 行号列宽度
+                        let line_number_width = 50.0;
+                        let font_id = egui::TextStyle::Monospace.resolve(ui.style());
+                        
+                        // 使用 allocate_ui 预留行号空间
+                        let total_width = ui.available_width();
+                        
+                        ui.horizontal_top(|ui| {
+                            // 预留行号区域
+                            let line_num_rect = ui.allocate_space(egui::vec2(line_number_width, available_height)).1;
+                            
+                            ui.add_space(4.0); // 小间距
+                            
+                            // 文本编辑器
+                            let text_edit_output = egui::TextEdit::multiline(&mut self.input)
+                                .desired_width(total_width - line_number_width - 4.0)
+                                .min_size(egui::vec2(total_width - line_number_width - 4.0, available_height))
+                                .code_editor()
+                                .hint_text("在此粘贴或输入原始 JSON")
+                                .show(ui);
+                            
+                            // 绘制行号
+                            let galley = &text_edit_output.galley;
+                            let galley_pos = text_edit_output.galley_pos;
+                            
+                            let mut current_line = 1;
+                            let mut y_offset = galley_pos.y;
+                            
+                            for (row_idx, row) in galley.rows.iter().enumerate() {
+                                // 检查这一行是否是新的逻辑行的开始
+                                let is_new_line = row_idx == 0 || {
+                                    if row_idx > 0 {
+                                        let prev_row = &galley.rows[row_idx - 1];
+                                        prev_row.ends_with_newline
+                                    } else {
+                                        false
+                                    }
+                                };
+                                
+                                if is_new_line {
+                                    // 绘制行号在预留区域
+                                    ui.painter().text(
+                                        egui::pos2(line_num_rect.right() - 4.0, y_offset),
+                                        egui::Align2::RIGHT_TOP,
+                                        format!("{}", current_line),
+                                        font_id.clone(),
+                                        egui::Color32::from_gray(128),
+                                    );
+                                    current_line += 1;
+                                }
+                                
+                                y_offset += row.rect().height();
+                            }
+                            
+                            text_edit_output
+                        }).inner
                     });
 
                 if edit_resp.inner.response.changed() {
@@ -276,9 +327,9 @@ impl eframe::App for JsonFmtApp {
                     let edit_dialog = &mut self.edit_dialog;
                     let search_input = &self.search_input;
                     
-                    egui::ScrollArea::both()
+                    egui::ScrollArea::vertical()
                         .id_salt("tree_scroll")
-                        .auto_shrink([false, false])
+                        .auto_shrink(false)
                         .max_height(available_height)
                         .show(right, |ui| {
                             let default_expand = if search_input.is_empty() {

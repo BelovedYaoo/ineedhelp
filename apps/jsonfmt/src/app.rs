@@ -206,6 +206,7 @@ impl eframe::App for JsonFmtApp {
 
         // 中央左右分栏
         egui::CentralPanel::default().show(ctx, |ui| {
+            ui.spacing_mut().item_spacing.x = 8.0; // 设置列间距
             ui.columns(2, |columns| {
                 // 左列：原始输入
                 let left = &mut columns[0];

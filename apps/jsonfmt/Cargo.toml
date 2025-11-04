@@ -9,4 +9,7 @@ serde_json.workspace = true
 serde.workspace = true
 arboard.workspace = true
 egui_json_tree.workspace = true
+image = "0.25"
 
+[build-dependencies]
+winres = "0.1.12"
